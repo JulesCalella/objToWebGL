@@ -2,7 +2,7 @@
 #include <fstream>
 #include <string>
 
-#define MAX_SIZE 1000
+#define MAX_SIZE 10000
 
 //using namespace std;
 
@@ -13,7 +13,7 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    int ret, i, retInt, retTemp, repeat, currElem, sign;
+    int ret, i, retInt, retTemp, repeat, currElem, sign, numVert;
     float retFloat;
     char retChar;
     std::string fileLine;
@@ -34,6 +34,8 @@ int main(int argc, char **argv)
     int eFaceNorm = 0;
     float output[MAX_SIZE];     // The vertices selected by the face
     int eOutput = 0;
+    int faceNumVert[MAX_SIZE];  // Faces have 3 or 4 vertices. This will show how many faces will need to be interpreted when writing to the file
+    int eFaceNumVert = 0;
 
 
     // Open the file passed as a parameter
@@ -174,6 +176,7 @@ int main(int argc, char **argv)
         else if((fileLine[0] == 'f') && (fileLine[1] == ' ')) {
             // The first number of each group is the vert
             i = 2;
+            numVert = 0;
             while(fileLine[i] != 0) {
                 // Vertex
                 retInt = 0;
@@ -211,7 +214,12 @@ int main(int argc, char **argv)
                 eFaceNorm++;
 
                 if(fileLine[i] == ' ') i++;
+
+                numVert++;
             }
+            faceNumVert[eFaceNumVert] = numVert;
+            eFaceNumVert++;
+            std::cout << "Num Verts in face: " << numVert << std::endl;
         }
     }
 
@@ -271,9 +279,17 @@ int main(int argc, char **argv)
     // Write indices to file
     //
     outFile << "const indices = [" << std::endl;
-    for(i=0; i<eFaceText; i+=4) {
+    j = 0;
+    for(i=0; i<eFaceText; ) {
         outFile << faceTexts[i]-1 <<", "<< faceTexts[i+1]-1 <<", "<< faceTexts[i+2]-1 << ","<< std::endl;
-        outFile << faceTexts[i+2]-1 <<", "<< faceTexts[i+3]-1 <<", "<< faceTexts[i]-1 << ","<< std::endl;
+        if(faceNumVert[j] == 4) {
+            outFile << faceTexts[i+2]-1 <<", "<< faceTexts[i+3]-1 <<", "<< faceTexts[i]-1 << ","<< std::endl;
+            i += 4;
+        } else {
+            i += 3;
+        }
+
+        j++;
     }
     outFile << "];\n\n" << std::endl;
 
