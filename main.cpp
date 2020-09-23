@@ -14,6 +14,7 @@ int main(int argc, char **argv)
     }
 
     int ret, i, retInt, retTemp, repeat, currElem, sign, numVert;
+    int numVertices = 0;
     float retFloat;
     char retChar;
     std::string fileLine;
@@ -88,6 +89,7 @@ int main(int argc, char **argv)
 
                 i++;
             }
+            numVertices++;
 
         }
         // TEXTURES
@@ -239,51 +241,87 @@ int main(int argc, char **argv)
             return -1;
     }
 
+
     //
-    // Write Textures to file
+    // Update vertices and faceVerts
     //
-    outFile << "const texVerts = [" << std::endl;
-    int numPrinted = 0;
-    for(i=0; i<eText; i++) {
-        outFile << "\t" << textures[i] << ", ";
-        numPrinted++;
-        if(numPrinted >= 2) {
-            numPrinted = 0;
-            outFile << std::endl;
+    // Iterate through every faceTexts element
+    int ftCurrElem, ftCurrValue, ftElemMax, ftDiffValue;
+    int fvCurrElem, fvCurrValue, fvElemMax, fvDiffValue;
+    int diffElem, verticesPrevElem, verticesNewElem;
+    for(ftCurrElem=0; ftCurrElem<eFaceText; ftCurrElem++) {
+        // Record the current value of the faceTexts array
+        ftCurrValue = faceTexts[ftCurrElem];
+        // Record the current associated value for faceVerts
+        fvCurrValue = faceVerts[ftCurrElem];
+        // Search through remaining faceVerts value for fvCurrValue
+        for(fvCurrElem=ftCurrElem+1; fvCurrElem<eFaceText; fvCurrElem++) {
+            // If ==fvCurrValue but !=ftCurrValue -> Mismatched pair: Update the vertex
+            if((faceVerts[fvCurrElem] == fvCurrValue) && (faceTexts[fvCurrElem] != ftCurrValue)) {
+                // Mismatch found. Now we have to run through the remaining values (including this one)
+                // looking for this exact pair and update the vertex value.
+                ftDiffValue = faceTexts[fvCurrElem];
+                fvDiffValue = ++numVertices;
+                for(diffElem=fvCurrElem; diffElem<eFaceText; diffElem++) {
+                    // If match found, update the vertex to fvDiffValue
+                    // Here we are only changing faceVerts of the current pair
+                    if((faceTexts[diffElem] == ftDiffValue) && (faceVerts[diffElem] == fvCurrValue)) {
+                        faceVerts[diffElem] = fvDiffValue;
+                    }
+                }
+
+                // Copy the actual vertex data in vertices
+                verticesPrevElem = (fvCurrValue - 1) * 3;
+                verticesNewElem = (fvDiffValue - 1) * 3;
+                vertices[verticesNewElem] = vertices[verticesPrevElem];
+                vertices[verticesNewElem+1] = vertices[verticesPrevElem+1];
+                vertices[verticesNewElem+2] = vertices[verticesPrevElem+2];
+                eVert+=3;
+            }
         }
     }
-    outFile << "];\n\n" << std::endl;
 
     //
     // Write vertices to file
     //
-    outFile << "const vertices = [" << std::endl;
+    outFile << "function createVert() {\n\tconst vertices = [" << std::endl;
     int j;
-    for(i=1; i<=eText; i++) {
-        // Find the textures in numerical order
-        for(j=0; j<eFaceText; j++) {
-            // Find which faceText links to text[i]
-            if(faceTexts[j] == i) {
-                // 1:1 with faceText and faceVerts means they are linked
-                // Find which vertex is referenced by this element
-                // Subtract by 1 to account for indexing from 0
-                j = (faceVerts[j] - 1) * 3;
-                outFile << "\t" << vertices[j] << ", " << vertices[j+1] << ", " << vertices[j+2] << "," << std::endl;
+    for(i=0; i<eVert; i+=3) {
+        outFile << "\t\t" << vertices[i] << ", " << vertices[i+1] << ", " << vertices[i+2] << "," << std::endl;
+    }
+    outFile << "\t];\n" << std::endl;
+    outFile << "\treturn vertices;\n}\n" << std::endl;
+
+
+    //
+    // Write Textures to file
+    //
+    outFile << "function createText() {\n\tconst texVerts = [" << std::endl;
+    int numPrinted = 0;
+    int tIndex;
+    for(j=1; j<=numVertices; j++) {
+        // Iterate through faceVerts, looking for values in numerical order i.e. faceVerts[i]==j 1<=j<=eFaceVert
+        for(i=0; i<eFaceVert; i++) {
+            if(faceVerts[i] == j) {
+                tIndex = (faceTexts[i] - 1) * 2;
+                outFile << "\t\t" << textures[tIndex] << ", " << textures[tIndex+1] << "," << std::endl;
                 break;
             }
         }
     }
-    outFile << "];\n\n" << std::endl;
+    outFile << "\t];\n" << std::endl;
+    outFile << "\treturn texVerts;\n}\n" << std::endl;
+
 
     //
     // Write indices to file
     //
-    outFile << "const indices = [" << std::endl;
+    outFile << "function createIndi() {\n\tconst indices = [" << std::endl;
     j = 0;
-    for(i=0; i<eFaceText; ) {
-        outFile << faceTexts[i]-1 <<", "<< faceTexts[i+1]-1 <<", "<< faceTexts[i+2]-1 << ","<< std::endl;
+    for(i=0; i<eFaceVert; ) {
+        outFile << "\t\t" << faceVerts[i]-1 <<", "<< faceVerts[i+1]-1 <<", "<< faceVerts[i+2]-1 << ","<< std::endl;
         if(faceNumVert[j] == 4) {
-            outFile << faceTexts[i+2]-1 <<", "<< faceTexts[i+3]-1 <<", "<< faceTexts[i]-1 << ","<< std::endl;
+            outFile << "\t\t" << faceVerts[i+2]-1 <<", "<< faceVerts[i+3]-1 <<", "<< faceVerts[i]-1 << ","<< std::endl;
             i += 4;
         } else {
             i += 3;
@@ -291,11 +329,13 @@ int main(int argc, char **argv)
 
         j++;
     }
-    outFile << "];\n\n" << std::endl;
+    outFile << "\t];\n" << std::endl;
+    outFile << "\treturn indices;\n}\n" << std::endl;
 
     //
     // Write normals to file
     //
+
 
     // Close file
     outFile.close();
