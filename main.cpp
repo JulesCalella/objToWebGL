@@ -4,8 +4,399 @@
 
 #define MAX_SIZE 10000
 
+#define ERR_PARAM_PASSED -1
+#define ERR_POLY_FACE -2
+#define ERR_FILE_OPEN -3
+
 //using namespace std;
 
+// 1. Open the file
+// 2. Read the vectors, textures, and normals
+// 3. Store all the values in temporary arrays
+// 4. Reopen file
+// 5. Find faces
+// 6. Create outputs
+//  a. If face has more than 4 vertices, print to the screen ERROR and exit
+
+int main(int argc, char **argv)
+{
+    if(argc < 3) {
+        std::cout << "Too few parameters passed." << std::endl;
+        return ERR_PARAM_PASSED;
+    }
+    else {
+        std::cout << "Opening file to find components..." << std::endl;
+    }
+
+    int ret, i, retInt, retTemp, repeat, currElem, sign, numVert;
+    int numVertices = 0;
+    float retFloat;
+    char retChar;
+    std::string fileLine;
+    std::string result;
+
+    // Arrays
+    float vertices[MAX_SIZE];   // Values collected directly from file
+    int eVert = 0;
+    float textures[MAX_SIZE];
+    int eText = 0;
+    float normals[MAX_SIZE];
+    int eNorm = 0;
+
+    // =================================================================
+    // PART 1
+    // =================================================================
+
+    // Open the file passed as a parameter
+    std::ifstream objFile (argv[1]);
+    if(!objFile.is_open()) {
+            std::cout << "Could not open file " << argv[1] << std::endl;
+            return ERR_FILE_OPEN;
+    }
+
+    // Read file. Stop at EOF (== 0)
+    while(std::getline(objFile, fileLine)){
+        std::cout << fileLine << std::endl;
+
+        // VERTICES
+        if((fileLine[0] == 'v') && (fileLine[1] == ' ')){
+            // If vertices found (v), store in vertices array
+            i = 2;
+            for(repeat=0; repeat<3; repeat++) {
+                retInt = 0;
+                retTemp = 0;
+                retFloat = 0.0f;
+                // Get whole numbers
+                sign = 1;
+                if(fileLine[i] == '-') {
+                    sign = -1;
+                    i++;
+                }
+                while((fileLine[i] >= '0') && (fileLine[i] <= '9')) {
+                    retChar = fileLine[i];
+                    i++;
+                    retInt *= 10;
+                    retInt += (retChar - '0');
+                }
+                // Check for decimal
+                if(fileLine[i] == '.') {
+                    i++;
+                    float mult = 0.1;
+                    while((fileLine[i] >= '0') && (fileLine[i] <= '9')) {
+                        retTemp = fileLine[i] - '0';
+                        retFloat += (retTemp * mult);
+                        i++;
+                        mult *= 0.1;
+                    }
+                }
+
+                // Save read value to the array
+                vertices[eVert] = (retInt + retFloat) * sign;
+                std::cout << vertices[eVert] << std::endl;
+                eVert++;
+
+                i++;
+            }
+            numVertices++;
+
+        }
+        // TEXTURES
+        else if((fileLine[0] == 'v') && (fileLine[1] == 't')){
+            // If vertices found (v), store in vertices array
+            i = 3;
+            for(repeat=0; repeat<2; repeat++) {
+                retInt = 0;
+                retTemp = 0;
+                retFloat = 0.0f;
+                // Get whole numbers
+                sign = 1;
+                if(fileLine[i] == '-') {
+                    sign = -1;
+                    i++;
+                }
+                while((fileLine[i] >= '0') && (fileLine[i] <= '9')) {
+                    retChar = fileLine[i];
+                    i++;
+                    retInt *= 10;
+                    retInt += (retChar - '0');
+                }
+                // Check for decimal
+                if(fileLine[i] == '.') {
+                    i++;
+                    float mult = 0.1;
+                    while((fileLine[i] >= '0') && (fileLine[i] <= '9')) {
+                        retTemp = fileLine[i] - '0';
+                        retFloat += (retTemp * mult);
+                        i++;
+                        mult *= 0.1;
+                    }
+                }
+
+                // Save read value to the array
+                textures[eText] = (retInt + retFloat) * sign;
+                std::cout << textures[eText] << std::endl;
+                eText++;
+
+                i++;
+            }
+
+        }
+        // NORMALS
+        else if((fileLine[0] == 'v') && (fileLine[1] == 'n')){
+            // If vertices found (v), store in vertices array
+            i = 3;
+            for(repeat=0; repeat<3; repeat++) {
+                retInt = 0;
+                retTemp = 0;
+                retFloat = 0.0f;
+                // Get whole numbers
+                sign = 1;
+                if(fileLine[i] == '-') {
+                    sign = -1;
+                    i++;
+                }
+                while((fileLine[i] >= '0') && (fileLine[i] <= '9')) {
+                    retChar = fileLine[i];
+                    i++;
+                    retInt *= 10;
+                    retInt += (retChar - '0');
+                }
+                // Check for decimal
+                if(fileLine[i] == '.') {
+                    i++;
+                    float mult = 0.1;
+                    while((fileLine[i] >= '0') && (fileLine[i] <= '9')) {
+                        retTemp = fileLine[i] - '0';
+                        retFloat += (retTemp * mult);
+                        i++;
+                        mult *= 0.1;
+                    }
+                }
+
+                // Save read value to the array
+                normals[eNorm] = (retInt + retFloat) * sign;
+                std::cout << normals[eNorm] << std::endl;
+                eNorm++;
+
+                i++;
+            }
+
+        }
+    }
+
+    // Close current file
+    objFile.close();
+
+    // Wait for file to close
+    while(objFile.is_open()) continue;
+
+
+    // =================================================================
+    // PART 2
+    // =================================================================
+    int currIndi = 0;
+    int currFaceElement = 0;
+    int eFace, startElem;
+
+    int faceVerts[5];    // Values indicating indices
+    int eFaceVert = 0;
+    int faceTexts[5];
+    int eFaceText = 0;
+    int faceNorms[5];
+    int eFaceNorm = 0;
+
+    float outputVerts[MAX_SIZE];     // The vertices selected by the face
+    int eOutVert = 0;
+    float outputTexts[MAX_SIZE];
+    int eOutText = 0;
+    float outputNorms[MAX_SIZE];
+    int eOutNorm = 0;
+    int outputIndis[MAX_SIZE];
+    int eOutIndi = 0;
+
+    int faceNumVert[MAX_SIZE];  // Faces have 3 or 4 vertices. This will show how many faces will need to be interpreted when writing to the file
+    int eFaceNumVert = 0;
+
+
+    // Open File
+    // std::ifstream objFile (argv[1]);
+    objFile.open(argv[1]);
+    if(!objFile.is_open()) {
+            std::cout << "Could not open file " << argv[1] << std::endl;
+            return ERR_FILE_OPEN;
+    }
+    else {
+        std::cout << "Opening file to find faces..." << std::endl;
+    }
+
+    // Find Faces
+    while(std::getline(objFile, fileLine)){
+        if((fileLine[0] == 'f') && (fileLine[1] == ' ')) {
+            // The first number of each group is the vert
+            i = 2;
+            eFace = 0;
+            numVert = 0;
+            // Search for numbers until the end of the string is found
+            while(fileLine[i] != 0) {
+                // Check if more than 4 vertices for face
+                if(numVert >= 4) {
+                    std::cout << "ERROR: Too many vertices in face. Exiting without finishing." << std::endl;
+                    return ERR_POLY_FACE;
+                }
+
+                // Vertex
+                retInt = 0;
+                retChar = '0';
+                while((fileLine[i] >= '0') && (fileLine[i] <= '9')) {
+                    retChar = fileLine[i];
+                    i++;
+                    retInt *= 10;
+                    retInt += (retChar - '0');
+                }
+                faceVerts[eFace] = retInt;
+
+                // Textures
+                retInt = 0;
+                retChar = '0';
+                i++;
+                while((fileLine[i] >= '0') && (fileLine[i] <= '9')) {
+                    retChar = fileLine[i];
+                    i++;
+                    retInt *= 10;
+                    retInt += (retChar - '0');
+                }
+                faceTexts[eFace] = retInt;
+
+                // Normals
+                retInt = 0;
+                retChar = '0';
+                i++;
+                while((fileLine[i] >= '0') && (fileLine[i] <= '9')) {
+                    retChar = fileLine[i];
+                    i++;
+                    retInt *= 10;
+                    retInt += (retChar - '0');
+                }
+                faceNorms[eFace] = retInt;
+
+                if(fileLine[i] == ' ') i++;
+
+                numVert++;
+                eFace++;
+            }
+
+            // Create elements for first face of read string
+            // Each veftex contains 3 values, so 9 values are created for one triangle
+            for(currFaceElement = 0; currFaceElement < 3; currFaceElement++) {
+                // VERTICES: X, Y, Z for first triangle
+                startElem = ( faceVerts[currFaceElement] - 1 ) * 3;
+                outputVerts[eOutVert] = vertices[startElem];
+                eOutVert++;
+                outputVerts[eOutVert] = vertices[startElem + 1];
+                eOutVert++;
+                outputVerts[eOutVert] = vertices[startElem + 2];
+                eOutVert++;
+
+                // TEXTURES
+                startElem = ( faceTexts[currFaceElement] - 1 ) * 2;
+                outputTexts[eOutText] = textures[startElem];
+                eOutText++;
+                outputTexts[eOutText] = textures[startElem + 1];
+                eOutText++;
+
+                // NORMALS
+                startElem = ( faceNorms[currFaceElement] - 1 ) * 3;
+                outputNorms[eOutNorm] = normals[startElem];
+                eOutNorm++;
+                outputNorms[eOutNorm] = normals[startElem + 1];
+                eOutNorm++;
+                outputNorms[eOutNorm] = normals[startElem + 2];
+                eOutNorm++;
+
+                // Indices to reference vertices
+                outputIndis[eOutIndi] = currIndi;
+                eOutIndi++;
+                currIndi++;
+            }
+
+            // If face is made of 4 vertices, create another triangle
+            // Create one more vertex and three more indices
+            if(numVert > 3) {
+                // X, Y, Z for first triangle
+                startElem = ( faceVerts[3] - 1 ) * 3;
+                outputVerts[eOutVert] = vertices[startElem];
+                eOutVert++;
+                outputVerts[eOutVert] = vertices[startElem + 1];
+                eOutVert++;
+                outputVerts[eOutVert] = vertices[startElem + 2];
+                eOutVert++;
+
+                // TEXTURES
+                startElem = ( faceTexts[3] - 1 ) * 2;
+                outputTexts[eOutText] = textures[startElem];
+                eOutText++;
+                outputTexts[eOutText] = textures[startElem + 1];
+                eOutText++;
+
+                // NORMALS
+                startElem = ( faceNorms[3] - 1 ) * 3;
+                outputNorms[eOutNorm] = normals[startElem];
+                eOutNorm++;
+                outputNorms[eOutNorm] = normals[startElem + 1];
+                eOutNorm++;
+                outputNorms[eOutNorm] = normals[startElem + 2];
+                eOutNorm++;
+
+                // The three indices for the first triangle have been created.
+                // Create the indices to form the triangle that includes this vertex.
+                // This will be the new vertex value and the two previous indices
+                outputIndis[eOutIndi] = outputIndis[eOutIndi - 1];
+                eOutIndi++;
+                outputIndis[eOutIndi] = currIndi;
+                eOutIndi++;
+                outputIndis[eOutIndi] = outputIndis[eOutIndi - 5];
+                eOutIndi++;
+                currIndi++;
+            }
+        }
+    }
+
+    // DEBUG: Print out contents for all arrays
+    std::cout << "\nindices = [" << std::endl;
+    for(i=0; i<eOutIndi; i+=3) {
+            std::cout << "\t" << outputIndis[i] << ", " << outputIndis[i+1] << ", " << outputIndis[i+2] << "," << std::endl;
+    }
+    std::cout << "];" << std::endl;
+
+    std::cout << "\nvertices = [" << std::endl;
+    for(i=0; i<eOutVert; i+=3) {
+            std::cout << "\t" << outputVerts[i] << ", " << outputVerts[i+1] << ", " << outputVerts[i+2] << "," << std::endl;
+    }
+    std::cout << "];" << std::endl;
+
+    std::cout << "\ntextures = [" << std::endl;
+    for(i=0; i<eOutText; i+=2) {
+            std::cout << "\t" << outputTexts[i] << ", " << outputTexts[i+1] << ", " << std::endl;
+    }
+    std::cout << "];" << std::endl;
+
+    std::cout << "\nnormals = [" << std::endl;
+    for(i=0; i<eOutNorm; i+=3) {
+            std::cout << "\t" << outputNorms[i] << ", " << outputNorms[i+1] << ", " << outputNorms[i+2] << "," << std::endl;
+    }
+    std::cout << "];" << std::endl;
+
+    // Close File
+    objFile.close();
+
+    //
+    // VVVVVVVVVV     OLD CODE BELOW     VVVVVVVVVV
+    //
+
+    return 0;
+}
+
+/*
 int main(int argc, char **argv)
 {
     if(argc < 3) {
@@ -342,3 +733,4 @@ int main(int argc, char **argv)
 
     return 0;
 }
+*/
