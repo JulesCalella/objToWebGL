@@ -362,7 +362,7 @@ int main(int argc, char **argv)
     }
 
     // DEBUG: Print out contents for all arrays
-    std::cout << "\nindices = [" << std::endl;
+    /*std::cout << "\nindices = [" << std::endl;
     for(i=0; i<eOutIndi; i+=3) {
             std::cout << "\t" << outputIndis[i] << ", " << outputIndis[i+1] << ", " << outputIndis[i+2] << "," << std::endl;
     }
@@ -384,14 +384,69 @@ int main(int argc, char **argv)
     for(i=0; i<eOutNorm; i+=3) {
             std::cout << "\t" << outputNorms[i] << ", " << outputNorms[i+1] << ", " << outputNorms[i+2] << "," << std::endl;
     }
-    std::cout << "];" << std::endl;
+    std::cout << "];" << std::endl; */
 
     // Close File
     objFile.close();
 
+
+    // =================================================================
+    // Part 3
+    // =================================================================
+    // Create New file
+    std::ofstream outFile (argv[2]);
+    if(!outFile.is_open()) {
+            std::cout << "Could not create file " << argv[2] << std::endl;
+            return -1;
+    }
+
     //
-    // VVVVVVVVVV     OLD CODE BELOW     VVVVVVVVVV
+    // Write indices to file
     //
+    std::cout << "Writing indices to file." << std::endl;
+    outFile << "function createIndi() {\n\tconst indices = [" << std::endl;
+    for(i = 0; i<eOutIndi; i+=3) {
+        outFile << "\t\t" << outputIndis[i] << ", " << outputIndis[i+1] << ", " << outputIndis[i+2] << ","<< std::endl;
+    }
+    outFile << "\t];\n" << std::endl;
+    outFile << "\treturn indices;\n}\n" << std::endl;
+
+    //
+    // Write vertices to file
+    //
+    std::cout << "Writing vertices to file." << std::endl;
+    outFile << "function createVert() {\n\tconst vertices = [" << std::endl;
+    for(i=0; i<eOutVert; i+=3) {
+        outFile << "\t\t" << outputVerts[i] << ", " << outputVerts[i+1] << ", " << outputVerts[i+2] << "," << std::endl;
+    }
+    outFile << "\t];\n" << std::endl;
+    outFile << "\treturn vertices;\n}\n" << std::endl;
+
+    //
+    // Write Textures to file
+    //
+    std::cout << "Writing texture coordinates to file." << std::endl;
+    outFile << "function createText() {\n\tconst textures = [" << std::endl;
+    for(i=0; i<eOutText; i+=2) {
+        outFile << "\t\t" << outputTexts[i] << ", " << outputTexts[i+1] << "," << std::endl;
+    }
+    outFile << "\t];\n" << std::endl;
+    outFile << "\treturn textures;\n}\n" << std::endl;
+
+    //
+    // Write normals to file
+    //
+    std::cout << "Writing normals to file." << std::endl;
+    outFile << "function createNorm() {\n\tconst normals = [" << std::endl;
+    for(i=0; i<eOutNorm; i+=3) {
+        outFile << "\t\t" << outputNorms[i] << ", " << outputNorms[i+1] << ", " << outputNorms[i+2] << "," << std::endl;
+    }
+    outFile << "\t];\n" << std::endl;
+    outFile << "\treturn normals;\n}\n" << std::endl;
+
+    // Close file
+    outFile.close();
+
 
     return 0;
 }
