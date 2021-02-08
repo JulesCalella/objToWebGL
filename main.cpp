@@ -10,7 +10,7 @@
 
 //using namespace std;
 
-// 1. Open the file
+// 1. Open the file7
 // 2. Read the vectors, textures, and normals
 // 3. Store all the values in temporary arrays
 // 4. Reopen file
@@ -20,8 +20,22 @@
 
 int main(int argc, char **argv)
 {
-    if(argc < 3) {
+    // Help Menu
+    std::string arg1 = argv[1];
+    std::cout << arg1 << std::endl;
+    if((arg1 == "/?") || (arg1== "-help") || (arg1 == "hello")){
+        std::cout << "Convert an OBJ file to Javascript functions that can be used in WebGL." << std::endl;
+        std::cout << "Parameter 1: The location of the OBJ file. \n\te.g. C:\\3dObjects\\myObject.obj" << std::endl;
+        std::cout << "Parameter 2: The directory to save the output file. \n\t e.g. C:\\3dObjects\\myWebglFiles" << std::endl;
+        std::cout << "Parameter 3: The name of the object you are creating. It's a good idea to capitalize the first letter. \n\t e.g. Cube" << std::endl;
+
+        return 0;
+    }
+
+    if(argc < 4) {
         std::cout << "Too few parameters passed." << std::endl;
+        std::cout << "objToWebGL.exe <.obj location> <write directory> <object name>" << std::endl;
+        std::cout << "To read the help file, type '/?' or '-help' as the first parameter." << std::endl;
         return ERR_PARAM_PASSED;
     }
     else {
@@ -34,6 +48,10 @@ int main(int argc, char **argv)
     char retChar;
     std::string fileLine;
     std::string result;
+    std::string inputFile = argv[1];
+    std::string outputDir = argv[2];
+    std::string objectName = argv[3];
+    std::string outputFileName = outputDir + "\\" + objectName + ".txt";
 
     // Arrays
     float vertices[MAX_SIZE];   // Values collected directly from file
@@ -394,9 +412,9 @@ int main(int argc, char **argv)
     // Part 3
     // =================================================================
     // Create New file
-    std::ofstream outFile (argv[2]);
+    std::ofstream outFile (outputFileName);
     if(!outFile.is_open()) {
-            std::cout << "Could not create file " << argv[2] << std::endl;
+            std::cout << "Could not create file " << outputFileName << std::endl;
             return -1;
     }
 
@@ -404,7 +422,7 @@ int main(int argc, char **argv)
     // Write indices to file
     //
     std::cout << "Writing indices to file." << std::endl;
-    outFile << "function createIndi() {\n\tconst indices = [" << std::endl;
+    outFile << "function create" + objectName + "Indi() {\n\tconst indices = [" << std::endl;
     for(i = 0; i<eOutIndi; i+=3) {
         outFile << "\t\t" << outputIndis[i] << ", " << outputIndis[i+1] << ", " << outputIndis[i+2] << ","<< std::endl;
     }
@@ -415,7 +433,7 @@ int main(int argc, char **argv)
     // Write vertices to file
     //
     std::cout << "Writing vertices to file." << std::endl;
-    outFile << "function createVert() {\n\tconst vertices = [" << std::endl;
+    outFile << "function create" + objectName + "Vert() {\n\tconst vertices = [" << std::endl;
     for(i=0; i<eOutVert; i+=3) {
         outFile << "\t\t" << outputVerts[i] << ", " << outputVerts[i+1] << ", " << outputVerts[i+2] << "," << std::endl;
     }
@@ -426,7 +444,7 @@ int main(int argc, char **argv)
     // Write Textures to file
     //
     std::cout << "Writing texture coordinates to file." << std::endl;
-    outFile << "function createText() {\n\tconst textures = [" << std::endl;
+    outFile << "function create" + objectName + "Text() {\n\tconst textures = [" << std::endl;
     for(i=0; i<eOutText; i+=2) {
         outFile << "\t\t" << outputTexts[i] << ", " << outputTexts[i+1] << "," << std::endl;
     }
@@ -437,7 +455,7 @@ int main(int argc, char **argv)
     // Write normals to file
     //
     std::cout << "Writing normals to file." << std::endl;
-    outFile << "function createNorm() {\n\tconst normals = [" << std::endl;
+    outFile << "function create" + objectName + "Norm() {\n\tconst normals = [" << std::endl;
     for(i=0; i<eOutNorm; i+=3) {
         outFile << "\t\t" << outputNorms[i] << ", " << outputNorms[i+1] << ", " << outputNorms[i+2] << "," << std::endl;
     }
