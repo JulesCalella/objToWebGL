@@ -21,19 +21,25 @@
 int main(int argc, char **argv)
 {
     // Help Menu
-    std::string arg1 = argv[1];
-    std::cout << arg1 << std::endl;
-    if((arg1 == "/?") || (arg1== "-help") || (arg1 == "hello")){
-        std::cout << "Convert an OBJ file to Javascript functions that can be used in WebGL." << std::endl;
-        std::cout << "Parameter 1: The location of the OBJ file. \n\te.g. C:\\3dObjects\\myObject.obj" << std::endl;
-        std::cout << "Parameter 2: The directory to save the output file. \n\t e.g. C:\\3dObjects\\myWebglFiles" << std::endl;
-        std::cout << "Parameter 3: The name of the object you are creating. It's a good idea to capitalize the first letter. \n\t e.g. Cube" << std::endl;
+    if(argv[1] != 0) {
+        std::string arg1 = argv[1];
+        std::string help1 = "/?";
+        std::string help2 = "-help";
+        if((arg1.compare(help1) == 0) || (arg1.compare(help2) == 0)){
+            std::cout << "\nConvert an OBJ file to Javascript functions that can be used in WebGL. Outputs the data in a text file as four separate functions (vertices, indices, normals, and texture coordinates)." << std::endl;
+            std::cout << "Parameter 1: The location of the OBJ file." << std::endl;
+            std::cout << "Parameter 2: The directory to save the output file." << std::endl;
+            std::cout << "Parameter 3: The name of the object you are creating. It's a good idea to capitalize the first letter." << std::endl;
+            std::cout << "\nExample: \nobjToWebGL.exe C:\\3dObjects\\myObject.obj C:\\3dObjects\\myWebglFiles Cube" << std::endl;
+            std::cout << "Creates a the file C:\\3dObjects\\myWebglFiles\\Cube.txt with code that can be copied and pasted into a WebGL project." << std::endl;
+            std::cout << "\nNotes: \n-Does not work with n-gon faces (any face > 4 vertices). \n-Currently supports up to 10,000 vertices." << std::endl;
 
-        return 0;
+            return 0;
+        }
     }
 
     if(argc < 4) {
-        std::cout << "Too few parameters passed." << std::endl;
+        std::cout << "\nToo few parameters passed." << std::endl;
         std::cout << "objToWebGL.exe <.obj location> <write directory> <object name>" << std::endl;
         std::cout << "To read the help file, type '/?' or '-help' as the first parameter." << std::endl;
         return ERR_PARAM_PASSED;
